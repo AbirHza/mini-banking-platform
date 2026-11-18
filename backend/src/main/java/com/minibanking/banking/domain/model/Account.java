@@ -3,7 +3,6 @@ package com.minibanking.banking.domain.model;
 import java.time.LocalDateTime;
 import java.util.Objects;
 import java.util.UUID;
-
 public class Account {
 
     private final UUID id;
@@ -19,6 +18,26 @@ public class Account {
         this.createdAt = LocalDateTime.now();
     }
 
+    private Account(
+            UUID id,
+            Money balance,
+            AccountStatus status,
+            LocalDateTime createdAt
+    ) {
+        this.id = Objects.requireNonNull(id, "Account ID is required");
+        this.balance = Objects.requireNonNull(balance, "Balance is required");
+        this.status = Objects.requireNonNull(status, "Account status is required");
+        this.createdAt = Objects.requireNonNull(createdAt, "Creation date is required");
+    }
+
+    public static Account reconstitute(
+            UUID id,
+            Money balance,
+            AccountStatus status,
+            LocalDateTime createdAt
+    ) {
+        return new Account(id, balance, status, createdAt);
+    }
     public void deposit(Money amount){
         ensureAccountIsActive();
         validatePositiveAmount(amount);

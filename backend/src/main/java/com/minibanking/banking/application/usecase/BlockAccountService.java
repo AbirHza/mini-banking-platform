@@ -4,9 +4,10 @@ import com.minibanking.banking.application.exception.AccountNotFoundException;
 import com.minibanking.banking.application.port.in.BlockAccountUseCase;
 import com.minibanking.banking.application.port.out.AccountRepository;
 import com.minibanking.banking.domain.model.Account;
+import org.springframework.stereotype.Service;
 
 import java.util.UUID;
-
+@Service
 public class BlockAccountService implements BlockAccountUseCase {
 
     private final AccountRepository accountRepository;

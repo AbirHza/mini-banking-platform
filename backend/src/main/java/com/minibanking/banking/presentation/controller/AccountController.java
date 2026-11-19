@@ -5,6 +5,8 @@ import com.minibanking.banking.domain.model.Money;
 import com.minibanking.banking.presentation.dto.request.CreateAccountRequest;
 import com.minibanking.banking.presentation.dto.request.MoneyOperationRequest;
 import com.minibanking.banking.presentation.dto.response.AccountResponse;
+import com.minibanking.banking.application.port.in.GetAccountTransactionsUseCase;
+import com.minibanking.banking.presentation.dto.response.TransactionHistoryResponse;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -21,6 +23,7 @@ public class AccountController {
     private final WithdrawMoneyUseCase withdrawMoneyUseCase;
     private final BlockAccountUseCase blockAccountUseCase;
     private final UnblockAccountUseCase unblockAccountUseCase;
+    private final GetAccountTransactionsUseCase getAccountTransactionsUseCase;
 
     public AccountController(
             CreateAccountUseCase createAccountUseCase,
@@ -28,7 +31,8 @@ public class AccountController {
             DepositMoneyUseCase depositMoneyUseCase,
             WithdrawMoneyUseCase withdrawMoneyUseCase,
             BlockAccountUseCase blockAccountUseCase,
-            UnblockAccountUseCase unblockAccountUseCase
+            UnblockAccountUseCase unblockAccountUseCase,
+            GetAccountTransactionsUseCase getAccountTransactionsUseCase
     ) {
         this.createAccountUseCase = createAccountUseCase;
         this.getAccountUseCase = getAccountUseCase;
@@ -36,6 +40,7 @@ public class AccountController {
         this.withdrawMoneyUseCase = withdrawMoneyUseCase;
         this.blockAccountUseCase = blockAccountUseCase;
         this.unblockAccountUseCase = unblockAccountUseCase;
+        this.getAccountTransactionsUseCase = getAccountTransactionsUseCase;
     }
     @PostMapping
     public ResponseEntity<AccountResponse> create(
@@ -92,6 +97,19 @@ public class AccountController {
     public ResponseEntity<AccountResponse> unblock(@PathVariable UUID id) {
         return ResponseEntity.ok(
                 AccountResponse.from(unblockAccountUseCase.execute(id))
+        );
+    }
+
+    @GetMapping("/{id}/transactions")
+    public ResponseEntity<TransactionHistoryResponse> getTransactions(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        var result = getAccountTransactionsUseCase.execute(id, page, size);
+
+        return ResponseEntity.ok(
+                TransactionHistoryResponse.from(result)
         );
     }
 

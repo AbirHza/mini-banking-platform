@@ -2,12 +2,15 @@ package com.minibanking.banking.application.usecase;
 
 import com.minibanking.banking.application.exception.AccountNotFoundException;
 import com.minibanking.banking.application.port.out.AccountRepository;
+import com.minibanking.banking.application.port.out.TransactionRepository;
 import com.minibanking.banking.domain.model.Account;
 import com.minibanking.banking.domain.model.AccountStatus;
 import com.minibanking.banking.domain.model.Money;
+import com.minibanking.banking.domain.model.TransactionType;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentMatchers;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import static org.mockito.Mockito.*;
 import java.util.Optional;
@@ -17,6 +20,9 @@ public class AccountUseCasesTest {
 
     private final AccountRepository accountRepository =
             mock(AccountRepository.class);
+
+    private TransactionRepository transactionRepository =
+            mock(TransactionRepository.class);
 
     @Test
     void shouldCreateAccount() {
@@ -44,13 +50,20 @@ public class AccountUseCasesTest {
                 .thenReturn(Optional.of(account));
         when(accountRepository.save(account)).thenReturn(account);
 
-        DepositMoneyService service =
-                new DepositMoneyService(accountRepository);
+        DepositMoneyService depositMoneyService = new DepositMoneyService(
+                accountRepository,
+                transactionRepository
+        );
 
-        Account result = service.execute(accountId, Money.eur("50.00"));
+        Account result = depositMoneyService.execute(accountId, Money.eur("50.00"));
 
         Assertions.assertEquals(Money.eur("150.00"), result.balance());
         Mockito.verify(accountRepository).save(account);
+        verify(transactionRepository).save(
+                argThat(transaction ->
+                        transaction.type() == TransactionType.DEPOSIT
+                )
+        );
     }
 
     @Test
@@ -60,12 +73,14 @@ public class AccountUseCasesTest {
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.empty());
 
-        DepositMoneyService service =
-                new DepositMoneyService(accountRepository);
+        DepositMoneyService depositMoneyService = new DepositMoneyService(
+                accountRepository,
+                transactionRepository
+        );
 
         Assertions.assertThrows(
                 AccountNotFoundException.class,
-                () -> service.execute(accountId, Money.eur("50.00"))
+                () -> depositMoneyService.execute(accountId, Money.eur("50.00"))
         );
 
         Mockito.verify(accountRepository, never()).save(ArgumentMatchers.any(Account.class));
@@ -80,13 +95,20 @@ public class AccountUseCasesTest {
                 .thenReturn(Optional.of(account));
         when(accountRepository.save(account)).thenReturn(account);
 
-        WithdrawMoneyService service =
-                new WithdrawMoneyService(accountRepository);
+        WithdrawMoneyService withdrawMoneyService = new WithdrawMoneyService(
+                accountRepository,
+                transactionRepository
+        );
 
-        Account result = service.execute(accountId, Money.eur("30.00"));
+        Account result = withdrawMoneyService.execute(accountId, Money.eur("30.00"));
 
         Assertions.assertEquals(Money.eur("70.00"), result.balance());
         Mockito.verify(accountRepository).save(account);
+        verify(transactionRepository).save(
+                argThat(transaction ->
+                        transaction.type() == TransactionType.WITHDRAWAL
+                )
+        );
     }
 
     @Test
@@ -96,12 +118,14 @@ public class AccountUseCasesTest {
         when(accountRepository.findById(accountId))
                 .thenReturn(Optional.empty());
 
-        WithdrawMoneyService service =
-                new WithdrawMoneyService(accountRepository);
+        WithdrawMoneyService withdrawMoneyService = new WithdrawMoneyService(
+                accountRepository,
+                transactionRepository
+        );
 
         Assertions.assertThrows(
                 AccountNotFoundException.class,
-                () -> service.execute(accountId, Money.eur("30.00"))
+                () -> withdrawMoneyService.execute(accountId, Money.eur("30.00"))
         );
 
         Mockito.verify(accountRepository, never()).save(ArgumentMatchers.any(Account.class));
